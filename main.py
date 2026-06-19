@@ -15,7 +15,7 @@ async def proxy(request: Request):
         raise HTTPException(status_code=401, detail="Invalid token")
 
     body = await request.json()
-    body["model"] = "grok-beta"   # Force valid model
+    body["model"] = "grok-4"   # Force valid model
 
     headers = {"Authorization": f"Bearer {XAI_KEY}"}
     async with httpx.AsyncClient() as client:
