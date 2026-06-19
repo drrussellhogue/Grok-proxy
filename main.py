@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Request, HTTPException
 import httpx
 import os
+import json
 
 app = FastAPI()
 
@@ -9,22 +10,25 @@ PROXY_TOKEN = "grokproxy"
 
 @app.post("/v1/chat/completions")
 async def proxy(request: Request):
-    body = await request.json()
-    
-    # Force a valid Grok model name
-    if "model" in body:
-        body = "grok-beta"
-    
     auth = request.headers.get("authorization")
     if not auth or not auth.startswith("Bearer ") or auth.split(" ")[1] != PROXY_TOKEN:
         raise HTTPException(status_code=401, detail="Invalid token")
+    
+    body = await request.body()
+    try:
+        data = json.loads(body)
+    except json.JSONDecodeError:
+        data = await request.json()
+    
+    if "model" in data:
+        data = "grok-beta"
     
     headers = {"Authorization": f"Bearer {XAI_KEY}"}
     async with httpx.AsyncClient() as client:
         resp = await client.post(
             "https://api.x.ai/v1/chat/completions",
             headers=headers,
-            json=body,
+            json=data,
             timeout=30.0
         )
     return resp.json()
