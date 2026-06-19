@@ -9,6 +9,12 @@ PROXY_TOKEN = "grokproxy"
 
 @app.post("/v1/chat/completions")
 async def proxy(request: Request):
+    body = await request.json()
+    
+    # Force a valid Grok model name
+    if "model" in body:
+        body = "grok-beta"
+    
     auth = request.headers.get("authorization")
     if not auth or not auth.startswith("Bearer ") or auth.split(" ")[1] != PROXY_TOKEN:
         raise HTTPException(status_code=401, detail="Invalid token")
@@ -18,7 +24,7 @@ async def proxy(request: Request):
         resp = await client.post(
             "https://api.x.ai/v1/chat/completions",
             headers=headers,
-            json=await request.json(),
+            json=body,
             timeout=30.0
         )
     return resp.json()
